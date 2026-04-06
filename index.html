@@ -9,7 +9,7 @@
 body {
   margin:0;
   font-family: Arial;
-  background: linear-gradient(135deg,#1a1a1a,#000);
+  background: linear-gradient(135deg,#0f0f0f,#000);
   color:#fff;
 }
 
@@ -19,15 +19,22 @@ h2 { text-align:center; }
 
 .score {
   text-align:center;
-  font-size:24px;
+  font-size:26px;
+  margin-bottom:5px;
+}
+
+.msg {
+  text-align:center;
+  color:#ffcc00;
   margin-bottom:10px;
 }
 
 .card {
-  background:#222;
+  background:#1e1e1e;
   padding:15px;
   border-radius:15px;
   margin:10px 0;
+  box-shadow:0 5px 15px rgba(0,0,0,0.6);
 }
 
 button {
@@ -35,20 +42,22 @@ button {
   margin:5px;
   border:none;
   border-radius:10px;
-  background:#444;
+  background:#333;
   color:#fff;
   font-size:16px;
+  cursor:pointer;
 }
-
-button:hover { background:#666; }
+button:hover { background:#555; }
 
 input {
   width:60px;
   margin:3px;
-  padding:5px;
+  padding:6px;
   border-radius:6px;
   border:none;
   text-align:center;
+  background:#111;
+  color:#fff;
 }
 
 .hidden { display:none; }
@@ -56,22 +65,21 @@ input {
 /* 三欄 */
 .gameArea {
   display:flex;
-  gap:10px;
+  gap:12px;
 }
 
 .panel {
   flex:1;
-  background:#222;
-  padding:10px;
-  border-radius:10px;
-  min-height:320px;
+  background:#1a1a1a;
+  padding:12px;
+  border-radius:12px;
 }
 
 /* 分數池 */
-.poolA { color:#ff6b6b; }
-.poolB { color:#6ba8ff; }
+.pool弟弟 { color:#ff6b6b; }
+.pool哥哥 { color:#6ba8ff; }
 
-/* 選擇紀錄 */
+/* 選擇 */
 .pickItem {
   background:#333;
   padding:8px;
@@ -80,7 +88,7 @@ input {
   cursor:pointer;
 }
 
-/* 結果動畫 */
+/* 結果 */
 .resultItem {
   margin:8px;
   padding:10px;
@@ -88,17 +96,12 @@ input {
   animation:fadeIn 0.4s ease;
 }
 
-.winA { background:#5a2a2a; }
-.winB { background:#2a3a5a; }
+.win弟弟 { background:#5a2a2a; }
+.win哥哥 { background:#2a3a5a; }
 
 @keyframes fadeIn {
   from { opacity:0; transform:translateY(10px); }
   to { opacity:1; transform:translateY(0); }
-}
-
-.msg {
-  text-align:center;
-  color:#ffcc00;
 }
 </style>
 </head>
@@ -106,14 +109,14 @@ input {
 <body>
 <div class="container">
 
-<h2>心理戰剪刀石頭布 v2</h2>
+<h2>心理戰剪刀石頭布</h2>
 
 <div class="score">總分：<span id="score">0</span></div>
 <div id="balanceMsg" class="msg"></div>
 
 <!-- 設定 -->
 <div id="setup" class="card">
-<p>甲（負分）</p>
+<p>弟弟（負分）</p>
 <div>
 <input class="aPool" type="number">
 <input class="aPool" type="number">
@@ -123,7 +126,7 @@ input {
 </div>
 <p>總和：<span id="aSum">0</span></p>
 
-<p>乙（正分）</p>
+<p>哥哥（正分）</p>
 <div>
 <input class="bPool" type="number">
 <input class="bPool" type="number">
@@ -137,7 +140,7 @@ input {
 <input id="initScore" type="number" value="0">
 
 <br><br>
-<button onclick="startGame()">開始</button>
+<button onclick="startGame()">開始遊戲</button>
 </div>
 
 <!-- 交接 -->
@@ -146,22 +149,22 @@ input {
 <!-- 三欄 -->
 <div id="gameArea" class="gameArea hidden">
 
-  <!-- 左：分數池 -->
+  <!-- 左 -->
   <div class="panel">
     <h3>分數池</h3>
-    <div id="poolA" class="poolA"></div>
+    <div id="poolA" class="pool弟弟"></div>
     <hr>
-    <div id="poolB" class="poolB"></div>
+    <div id="poolB" class="pool哥哥"></div>
   </div>
 
-  <!-- 中：操作 -->
+  <!-- 中 -->
   <div class="panel">
     <div id="turn"></div>
     <div id="choices"></div>
     <div id="pickList"></div>
   </div>
 
-  <!-- 右：結果 -->
+  <!-- 右 -->
   <div class="panel">
     <h3>結果</h3>
     <div id="result"></div>
@@ -190,16 +193,16 @@ let aChoices=[],bChoices=[];
 let phase='A';
 const hands=["石頭","剪刀","布"];
 
-// ===== 分數池顯示 =====
+// ===== 分數池 =====
 function renderPools(){
-  poolA.innerHTML="<h4>甲</h4>";
+  poolA.innerHTML="<h4>弟弟</h4>";
   aPool.forEach(v=>{
     let d=document.createElement("div");
     d.innerText=v;
     poolA.appendChild(d);
   });
 
-  poolB.innerHTML="<h4>乙</h4>";
+  poolB.innerHTML="<h4>哥哥</h4>";
   bPool.forEach(v=>{
     let d=document.createElement("div");
     d.innerText=v;
@@ -224,13 +227,13 @@ function startGame(){
   if(sumA>sumB*2){
     let avg=sumA/aPool.length;
     bPool=bPool.map(v=>v+Math.round(avg));
-    msg+="⚠️ 甲過強 → 乙強化 ";
+    msg+="⚠️ 弟弟過強 → 哥哥強化 ";
   }
 
   if(sumB>sumA*2){
     let avg=sumB/bPool.length;
     aPool=aPool.map(v=>v-Math.round(avg));
-    msg+="⚠️ 乙過強 → 甲變更負 ";
+    msg+="⚠️ 哥哥過強 → 弟弟變更負 ";
   }
 
   balanceMsg.innerText=msg;
@@ -247,7 +250,7 @@ function startGame(){
 // ===== UI =====
 function updateTurn(){
   let arr=(phase==='A')?aChoices:bChoices;
-  turn.innerText=(phase==='A'?"甲":"乙")+" 選擇 "+arr.length+"/5";
+  turn.innerText=(phase==='A'?"弟弟":"哥哥")+" 選擇 "+arr.length+"/5";
 }
 
 function renderButtons(){
@@ -260,27 +263,12 @@ function renderButtons(){
   });
 }
 
-// ===== 顯示選擇 =====
-function renderPick(){
-  pickList.innerHTML='';
-  let arr=(phase==='A')?aChoices:bChoices;
-
-  arr.forEach((v,i)=>{
-    let d=document.createElement('div');
-    d.className='pickItem';
-    d.innerText=`第${i+1}局：${v}（點擊重選）`;
-    d.onclick=()=>{
-      arr.splice(i,1);
-      renderPick();
-      updateTurn();
-    };
-    pickList.appendChild(d);
-  });
-}
-
 // ===== 選擇 =====
 function select(h){
   let arr=(phase==='A')?aChoices:bChoices;
+
+  if(arr.length >= 5) return; // 修正BUG
+
   arr.push(h);
 
   renderPick();
@@ -297,13 +285,31 @@ function select(h){
   }
 }
 
+// ===== 顯示 =====
+function renderPick(){
+  pickList.innerHTML='';
+  let arr=(phase==='A')?aChoices:bChoices;
+
+  arr.forEach((v,i)=>{
+    let d=document.createElement('div');
+    d.className='pickItem';
+    d.innerText=`第${i+1}局：${v}`;
+    d.onclick=()=>{
+      arr.splice(i,1);
+      renderPick();
+      updateTurn();
+    };
+    pickList.appendChild(d);
+  });
+}
+
 // ===== 交接 =====
 function showHandoff(){
   gameArea.classList.add('hidden');
   handoff.classList.remove('hidden');
 
   handoff.innerHTML=`
-    <h3>請交給乙</h3>
+    <h3>請交給哥哥</h3>
     <button onclick="startB()">我準備好了</button>
   `;
 }
@@ -329,7 +335,7 @@ function draw(pool){
   return pool[Math.floor(Math.random()*pool.length)];
 }
 
-// ===== 分數更新 =====
+// ===== 分數 =====
 function updateScore(){
   score.innerText=totalScore;
 }
@@ -353,13 +359,13 @@ async function reveal(){
     }else if(r==='A'){
       let v=draw(aPool);
       totalScore+=v;
-      text+=`甲勝 ${v}`;
-      cls+=' winA';
+      text+=`弟弟勝 ${v}`;
+      cls+=' win弟弟';
     }else{
       let v=draw(bPool);
       totalScore+=v;
-      text+=`乙勝 ${v}`;
-      cls+=' winB';
+      text+=`哥哥勝 ${v}`;
+      cls+=' win哥哥';
     }
 
     updateScore();
