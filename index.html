@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>心理戰剪刀石頭布 v2</title>
+<title>剪刀石頭布 v2</title>
 
 <style>
 body {
@@ -109,7 +109,7 @@ input {
 <body>
 <div class="container">
 
-<h2>心理戰剪刀石頭布</h2>
+<h2>剪刀石頭布</h2>
 
 <div class="score">總分：<span id="score">0</span></div>
 <div id="balanceMsg" class="msg"></div>
@@ -230,7 +230,7 @@ function startGame(){
     msg+="⚠️ 弟弟過強 → 哥哥強化 ";
   }
 
-  if(sumB>sumA*2){
+  if(sumB>sumA*5){
     let avg=sumB/bPool.length;
     aPool=aPool.map(v=>v-Math.round(avg));
     msg+="⚠️ 哥哥過強 → 弟弟變更負 ";
