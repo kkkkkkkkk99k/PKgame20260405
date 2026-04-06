@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>心理戰剪刀石頭布 v2</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background: linear-gradient(135deg,#1a1a1a,#000);
+  color:#fff;
+}
+
+.container { max-width:900px; margin:auto; padding:10px; }
+
+h2 { text-align:center; }
+
+.score {
+  text-align:center;
+  font-size:24px;
+  margin-bottom:10px;
+}
+
+.card {
+  background:#222;
+  padding:15px;
+  border-radius:15px;
+  margin:10px 0;
+}
+
+button {
+  padding:12px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  background:#444;
+  color:#fff;
+  font-size:16px;
+}
+
+button:hover { background:#666; }
+
+input {
+  width:60px;
+  margin:3px;
+  padding:5px;
+  border-radius:6px;
+  border:none;
+  text-align:center;
+}
+
+.hidden { display:none; }
+
+/* 三欄 */
+.gameArea {
+  display:flex;
+  gap:10px;
+}
+
+.panel {
+  flex:1;
+  background:#222;
+  padding:10px;
+  border-radius:10px;
+  min-height:320px;
+}
+
+/* 分數池 */
+.poolA { color:#ff6b6b; }
+.poolB { color:#6ba8ff; }
+
+/* 選擇紀錄 */
+.pickItem {
+  background:#333;
+  padding:8px;
+  margin:5px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* 結果動畫 */
+.resultItem {
+  margin:8px;
+  padding:10px;
+  border-radius:10px;
+  animation:fadeIn 0.4s ease;
+}
+
+.winA { background:#5a2a2a; }
+.winB { background:#2a3a5a; }
+
+@keyframes fadeIn {
+  from { opacity:0; transform:translateY(10px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.msg {
+  text-align:center;
+  color:#ffcc00;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h2>心理戰剪刀石頭布 v2</h2>
+
+<div class="score">總分：<span id="score">0</span></div>
+<div id="balanceMsg" class="msg"></div>
+
+<!-- 設定 -->
+<div id="setup" class="card">
+<p>甲（負分）</p>
+<div>
+<input class="aPool" type="number">
+<input class="aPool" type="number">
+<input class="aPool" type="number">
+<input class="aPool" type="number">
+<input class="aPool" type="number">
+</div>
+<p>總和：<span id="aSum">0</span></p>
+
+<p>乙（正分）</p>
+<div>
+<input class="bPool" type="number">
+<input class="bPool" type="number">
+<input class="bPool" type="number">
+<input class="bPool" type="number">
+<input class="bPool" type="number">
+</div>
+<p>總和：<span id="bSum">0</span></p>
+
+<p>初始分數</p>
+<input id="initScore" type="number" value="0">
+
+<br><br>
+<button onclick="startGame()">開始</button>
+</div>
+
+<!-- 交接 -->
+<div id="handoff" class="card hidden"></div>
+
+<!-- 三欄 -->
+<div id="gameArea" class="gameArea hidden">
+
+  <!-- 左：分數池 -->
+  <div class="panel">
+    <h3>分數池</h3>
+    <div id="poolA" class="poolA"></div>
+    <hr>
+    <div id="poolB" class="poolB"></div>
+  </div>
+
+  <!-- 中：操作 -->
+  <div class="panel">
+    <div id="turn"></div>
+    <div id="choices"></div>
+    <div id="pickList"></div>
+  </div>
+
+  <!-- 右：結果 -->
+  <div class="panel">
+    <h3>結果</h3>
+    <div id="result"></div>
+  </div>
+
+</div>
+
+</div>
+
+<script>
+
+// ===== 即時計算 =====
+function calcSum(cls,id){
+  let sum=0;
+  document.querySelectorAll('.'+cls).forEach(i=>{
+    sum+=Number(i.value)||0;
+  });
+  document.getElementById(id).innerText=sum;
+}
+document.querySelectorAll('.aPool').forEach(i=>i.oninput=()=>calcSum('aPool','aSum'));
+document.querySelectorAll('.bPool').forEach(i=>i.oninput=()=>calcSum('bPool','bSum'));
+
+// ===== 變數 =====
+let aPool,bPool,totalScore;
+let aChoices=[],bChoices=[];
+let phase='A';
+const hands=["石頭","剪刀","布"];
+
+// ===== 分數池顯示 =====
+function renderPools(){
+  poolA.innerHTML="<h4>甲</h4>";
+  aPool.forEach(v=>{
+    let d=document.createElement("div");
+    d.innerText=v;
+    poolA.appendChild(d);
+  });
+
+  poolB.innerHTML="<h4>乙</h4>";
+  bPool.forEach(v=>{
+    let d=document.createElement("div");
+    d.innerText=v;
+    poolB.appendChild(d);
+  });
+}
+
+// ===== 開始 =====
+function startGame(){
+
+  aPool=[...document.querySelectorAll('.aPool')].map(i=>Number(i.value)||0);
+  bPool=[...document.querySelectorAll('.bPool')].map(i=>Number(i.value)||0);
+
+  totalScore=Number(initScore.value)||0;
+  updateScore();
+
+  let sumA=aPool.reduce((a,b)=>a+Math.abs(b),0);
+  let sumB=bPool.reduce((a,b)=>a+b,0);
+
+  let msg="";
+
+  if(sumA>sumB*2){
+    let avg=sumA/aPool.length;
+    bPool=bPool.map(v=>v+Math.round(avg));
+    msg+="⚠️ 甲過強 → 乙強化 ";
+  }
+
+  if(sumB>sumA*2){
+    let avg=sumB/bPool.length;
+    aPool=aPool.map(v=>v-Math.round(avg));
+    msg+="⚠️ 乙過強 → 甲變更負 ";
+  }
+
+  balanceMsg.innerText=msg;
+
+  renderPools();
+
+  setup.classList.add('hidden');
+  gameArea.classList.remove('hidden');
+
+  renderButtons();
+  updateTurn();
+}
+
+// ===== UI =====
+function updateTurn(){
+  let arr=(phase==='A')?aChoices:bChoices;
+  turn.innerText=(phase==='A'?"甲":"乙")+" 選擇 "+arr.length+"/5";
+}
+
+function renderButtons(){
+  choices.innerHTML='';
+  hands.forEach(h=>{
+    let b=document.createElement('button');
+    b.innerText=h;
+    b.onclick=()=>select(h);
+    choices.appendChild(b);
+  });
+}
+
+// ===== 顯示選擇 =====
+function renderPick(){
+  pickList.innerHTML='';
+  let arr=(phase==='A')?aChoices:bChoices;
+
+  arr.forEach((v,i)=>{
+    let d=document.createElement('div');
+    d.className='pickItem';
+    d.innerText=`第${i+1}局：${v}（點擊重選）`;
+    d.onclick=()=>{
+      arr.splice(i,1);
+      renderPick();
+      updateTurn();
+    };
+    pickList.appendChild(d);
+  });
+}
+
+// ===== 選擇 =====
+function select(h){
+  let arr=(phase==='A')?aChoices:bChoices;
+  arr.push(h);
+
+  renderPick();
+  updateTurn();
+
+  if(arr.length===5){
+    if(phase==='A'){
+      pickList.innerHTML='';
+      showHandoff();
+    }else{
+      choices.innerHTML='<button onclick=\"reveal()\">揭曉</button>';
+      turn.innerText='準備揭曉';
+    }
+  }
+}
+
+// ===== 交接 =====
+function showHandoff(){
+  gameArea.classList.add('hidden');
+  handoff.classList.remove('hidden');
+
+  handoff.innerHTML=`
+    <h3>請交給乙</h3>
+    <button onclick="startB()">我準備好了</button>
+  `;
+}
+
+function startB(){
+  phase='B';
+  handoff.classList.add('hidden');
+  gameArea.classList.remove('hidden');
+
+  renderPick();
+  updateTurn();
+}
+
+// ===== 判定 =====
+function judge(a,b){
+  if(a===b) return 'draw';
+  if((a==='石頭'&&b==='剪刀')||(a==='剪刀'&&b==='布')||(a==='布'&&b==='石頭')) return 'A';
+  return 'B';
+}
+
+// ===== 抽分 =====
+function draw(pool){
+  return pool[Math.floor(Math.random()*pool.length)];
+}
+
+// ===== 分數更新 =====
+function updateScore(){
+  score.innerText=totalScore;
+}
+
+// ===== 揭曉 =====
+async function reveal(){
+  result.innerHTML='<h3>結果</h3>';
+
+  for(let i=0;i<5;i++){
+    await new Promise(r=>setTimeout(r,600));
+
+    let a=aChoices[i];
+    let b=bChoices[i];
+    let r=judge(a,b);
+
+    let text=`第${i+1}局：${a} vs ${b} → `;
+    let cls='resultItem';
+
+    if(r==='draw'){
+      text+='平手';
+    }else if(r==='A'){
+      let v=draw(aPool);
+      totalScore+=v;
+      text+=`甲勝 ${v}`;
+      cls+=' winA';
+    }else{
+      let v=draw(bPool);
+      totalScore+=v;
+      text+=`乙勝 ${v}`;
+      cls+=' winB';
+    }
+
+    updateScore();
+
+    let d=document.createElement('div');
+    d.className=cls;
+    d.innerText=text;
+    result.appendChild(d);
+  }
+
+  let f=document.createElement('h2');
+  f.innerText=`最終：${totalScore}`;
+  result.appendChild(f);
+
+  let btn=document.createElement('button');
+  btn.innerText='再玩一局';
+  btn.onclick=resetGame;
+  result.appendChild(btn);
+}
+
+// ===== 重置 =====
+function resetGame(){
+  aChoices=[];
+  bChoices=[];
+  phase='A';
+
+  totalScore=Number(initScore.value)||0;
+  updateScore();
+
+  result.innerHTML='';
+  balanceMsg.innerText='';
+
+  gameArea.classList.remove('hidden');
+  handoff.classList.add('hidden');
+
+  renderButtons();
+  renderPick();
+  updateTurn();
+}
+
+</script>
+</body>
+</html>
